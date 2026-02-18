@@ -13,7 +13,6 @@ interface CheckoutModalProps {
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, cycle, config, user, onClose, onSuccess }) => {
-  const [method, setMethod] = useState<'stripe' | 'razorpay'>('razorpay');
   const [isProcessing, setIsProcessing] = useState(false);
   const [step, setStep] = useState<'details' | 'processing'>('details');
 
@@ -73,20 +72,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, cycle, confi
     rzp.open();
   };
 
-  const handleStripePayment = () => {
-    // Placeholder for Stripe logic
-    setStep('processing');
-    setTimeout(() => {
-      onSuccess();
-    }, 3000);
-  };
-
   const handlePayment = () => {
-    if (method === 'razorpay') {
-      handleRazorpayPayment();
-    } else {
-      handleStripePayment();
-    }
+    handleRazorpayPayment();
   };
 
   return (
@@ -123,40 +110,25 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, cycle, confi
 
                <div className="mt-12 bg-zinc-950 p-4 rounded-2xl border border-zinc-800">
                   <p className="text-[8px] font-black text-zinc-600 uppercase leading-relaxed">
-                    Secure transaction powered by {method === 'razorpay' ? 'Razorpay India' : 'Stripe Global'}. Encrypted end-to-end.
+                    Secure transaction powered by Razorpay India. Encrypted end-to-end.
                   </p>
                </div>
             </div>
 
-            {/* Right: Payment Method */}
+            {/* Right: Payment Handlers */}
             <div className="p-10 md:w-7/12 flex flex-col">
                <div className="flex justify-between items-center mb-10">
-                  <h2 className="text-xl font-black text-white">Payment Method</h2>
+                  <h2 className="text-xl font-black text-white">Secure Checkout</h2>
                   <button onClick={onClose} className="text-zinc-600 hover:text-white transition-colors">✕</button>
                </div>
 
-               <div className="grid grid-cols-2 gap-4 mb-8">
-                  <button 
-                    onClick={() => setMethod('razorpay')}
-                    className={`px-4 py-3 rounded-2xl border transition-all flex flex-col items-center gap-2 ${method === 'razorpay' ? 'border-red-600 bg-red-600/5' : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-700'}`}
-                  >
-                    <span className="text-[10px] font-black text-white uppercase">Razorpay</span>
-                    <span className="text-[8px] font-black text-zinc-500 uppercase tracking-tighter">India / UPI</span>
-                  </button>
-                  <button 
-                    onClick={() => setMethod('stripe')}
-                    className={`px-4 py-3 rounded-2xl border transition-all flex flex-col items-center gap-2 ${method === 'stripe' ? 'border-red-600 bg-red-600/5' : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-700'}`}
-                  >
-                    <span className="text-[10px] font-black text-white uppercase">Stripe</span>
-                    <span className="text-[8px] font-black text-zinc-500 uppercase tracking-tighter">International</span>
-                  </button>
-               </div>
-
-               <div className="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-800 mb-6">
-                 <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest leading-relaxed">
-                   {method === 'razorpay' 
-                     ? "You will be redirected to the Razorpay secure popup for UPI, Cards, and Netbanking." 
-                     : "Secure credit card payment via Stripe global gateway."}
+               <div className="bg-zinc-900/40 p-8 rounded-2xl border border-zinc-800 mb-8 flex flex-col items-center text-center">
+                 <div className="w-16 h-16 bg-red-600/10 rounded-2xl flex items-center justify-center text-red-500 mb-4 border border-red-500/20">
+                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                 </div>
+                 <p className="text-xs font-black text-white uppercase mb-2">Razorpay Payment Hub</p>
+                 <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest leading-relaxed">
+                   Support for UPI, Netbanking, and all major Debit/Credit Cards in India.
                  </p>
                </div>
 
@@ -166,8 +138,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, cycle, confi
                   isLoading={isProcessing}
                   className="w-full py-5 text-xs shadow-[0_0_30px_rgba(220,38,38,0.2)]"
                  >
-                   Confirm & Proceed
+                   Pay Securely via Razorpay
                  </Button>
+                 <p className="text-center text-[8px] font-bold text-zinc-600 uppercase tracking-widest mt-4">
+                   PCI-DSS Compliant Transaction
+                 </p>
                </div>
             </div>
           </div>

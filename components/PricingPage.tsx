@@ -93,7 +93,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ plans, config, user, o
       </div>
 
       <div className="mt-24 text-center">
-         <p className="text-zinc-500 text-sm font-medium">All plans include 18% GST as per Indian regulations. <br /> Secure payments via Stripe & Razorpay.</p>
+         <p className="text-zinc-500 text-sm font-medium">All plans include 18% GST as per Indian regulations. <br /> Secure payments via Razorpay.</p>
       </div>
     </div>
   );
