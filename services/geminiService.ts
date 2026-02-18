@@ -49,8 +49,8 @@ const extractJson = (text: string): any[] => {
 
 export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
   const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("Gemini API Key is missing. Check your environment variables.");
+  if (!apiKey || apiKey === "undefined") {
+    throw new Error("Gemini API Key is missing. If you are on Netlify, please set the 'API_KEY' variable in Site Configuration > Environment Variables and re-deploy.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
