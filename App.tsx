@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  User, Lead, Plan, Invoice, SystemConfig 
+  User, Lead, Plan, Invoice, SystemConfig, BillingCycle 
 } from './types.ts';
 import { UserPortal } from './components/UserPortal.tsx';
 import { AdminPortal as AdminDashboard } from './components/AdminPortal.tsx';
@@ -24,6 +24,17 @@ const INITIAL_CONFIG: SystemConfig = {
   platformBranding: { name: "Canvas Cartel", tagline: "Cloud Prospecting Engine", primaryColor: "#dc2626" },
   companyDetails: { name: "Canvas Cartel Intelligence", address: "Cloud Tower, Global", gst: "07AAAAA0000A1Z5", logo: "CC" }
 };
+
+// Type-safe normalization helpers
+function parseBillingCycle(cycle: string | undefined): BillingCycle {
+  if (cycle === 'yearly') return 'yearly';
+  return 'monthly'; // Default
+}
+
+function parseRole(role: string | undefined): 'user' | 'admin' {
+  if (role === 'admin') return 'admin';
+  return 'user'; // Default
+}
 
 const App: React.FC = () => {
   const [view, setView] = useState<'auth' | 'user' | 'admin' | 'setup'>('auth');
@@ -70,7 +81,6 @@ const App: React.FC = () => {
         }
       });
 
-      // Realtime listener for Live Admin Dashboard
       const channel = supabase
         .channel('schema-db-changes')
         .on(
@@ -96,9 +106,9 @@ const App: React.FC = () => {
     setIsLoading(true);
     setDbError(null);
     try {
-      let profile = null;
+      let profile: User | null = null;
       try {
-        profile = await db.getProfile(userId);
+        profile = await db.getProfile(userId) as User | null;
       } catch (err: any) {
         if (err.message.includes("profiles") || err.message.includes("PGRST205")) {
           setDbError("Database Schema Missing: 'profiles' table not found.");
@@ -115,21 +125,26 @@ const App: React.FC = () => {
           const trialExpiryDate = new Date();
           trialExpiryDate.setDate(trialExpiryDate.getDate() + config.trialDurationDays);
           
-          profile = {
+          const roleVal = parseRole(user.email === 'admin@cc.com' ? 'admin' : 'user');
+          const cycleVal = parseBillingCycle('monthly');
+
+          const newProfile: User = {
             id: user.id,
             name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Member',
             email: user.email!,
-            role: user.email === 'admin@cc.com' ? 'admin' : 'user',
+            role: roleVal,
             createdAt: new Date().toISOString(),
             subscription: { 
               planId: 'basic', 
-              cycle: 'monthly', 
+              cycle: cycleVal, 
               status: 'trial', 
               leadsUsedThisMonth: 0, 
               nextBillingDate: trialExpiryDate.toISOString() 
             },
             webhook: { url: '', secret: '', enabled: false, logs: [] }
           };
+          
+          profile = newProfile;
           try {
             await db.updateProfile(profile);
           } catch (e: any) {
@@ -265,17 +280,15 @@ const App: React.FC = () => {
         <div className="max-w-3xl w-full bg-zinc-900/50 border border-zinc-800 rounded-[3rem] p-12 shadow-2xl animate-fade-in">
            <div className="mb-10 text-center">
               <div className="w-20 h-20 bg-red-600/10 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-red-500/20 shadow-2xl shadow-red-900/20">
-                 <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                 <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 01-2-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
               </div>
               <h1 className="text-3xl font-black text-white uppercase tracking-tighter">Database Initializer</h1>
               <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mt-2">Error PGRST205: Missing Table Schema</p>
            </div>
-           
            <div className="space-y-6">
               <p className="text-sm text-zinc-400 font-medium leading-relaxed">
                 Your Supabase Auth is working, but your database tables don't exist yet. Follow these steps to fix this instantly:
               </p>
-              
               <div className="bg-black/40 rounded-3xl p-8 border border-zinc-800 space-y-4">
                  <div className="flex items-center gap-4">
                     <span className="w-6 h-6 bg-red-600 rounded-lg flex items-center justify-center text-[10px] font-black text-white">1</span>
@@ -290,7 +303,6 @@ const App: React.FC = () => {
                     <span className="text-[10px] font-black text-zinc-300 uppercase">Click "Run" and refresh this page</span>
                  </div>
               </div>
-
               <div className="flex gap-4 pt-6">
                  <Button className="flex-1 py-5" onClick={() => window.location.reload()}>I've run the SQL, Refresh</Button>
                  <Button variant="secondary" className="px-10" onClick={handleLogout}>Logout</Button>
@@ -313,7 +325,6 @@ const App: React.FC = () => {
           branding={config.platformBranding}
         />
       )}
-
       {view === 'user' && currentUser && (
         <UserPortal 
           user={currentUser} 
@@ -328,7 +339,6 @@ const App: React.FC = () => {
           onAddInvoice={handleAddInvoice}
         />
       )}
-
       {view === 'admin' && (
         <AdminDashboard 
           users={users} 

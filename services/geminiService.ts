@@ -13,17 +13,12 @@ const getPlatformInstruction = (platform: Platform): string => {
   }
 };
 
-/**
- * Robust JSON extraction from model output
- */
 const extractJson = (text: string): any[] => {
   if (!text) return [];
   try {
-    // Attempt direct parse if the model was perfect
     const parsed = JSON.parse(text);
     return Array.isArray(parsed) ? parsed : [parsed];
   } catch (e) {
-    // Try to find the first array-like structure in the text
     const arrayMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
     if (arrayMatch) {
       try {
@@ -32,8 +27,6 @@ const extractJson = (text: string): any[] => {
         console.error("Failed to parse regex-extracted array", innerE);
       }
     }
-    
-    // Fallback: try to find a single object and wrap it
     const objectMatch = text.match(/\{\s*[\s\S]*\}\s*/);
     if (objectMatch) {
       try {
@@ -42,7 +35,6 @@ const extractJson = (text: string): any[] => {
         console.error("Failed to parse regex-extracted object", innerE);
       }
     }
-
     throw new Error("AI output was not valid JSON. Please try again or refine the query.");
   }
 };
@@ -112,7 +104,8 @@ export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
       }
     });
 
-    const rawLeads = extractJson(response.text);
+    const generatedText = response.text ?? "";
+    const rawLeads = extractJson(generatedText);
     const today = new Date().toISOString();
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const webSources = groundingChunks
@@ -128,7 +121,6 @@ export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
       leadNumber: index + 1,
       status: 'new',
       contacted: false,
-      // Normalize values that might be strings/null
       qualityScore: Number(item.qualityScore) || 70,
       sources: webSources.length > 0 ? webSources.slice(index % webSources.length, (index % webSources.length) + 2) : []
     }));

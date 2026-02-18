@@ -5,7 +5,7 @@ import { Button } from './Button.tsx';
 
 interface AdminPanelProps {
   config: SystemConfig;
-  setConfig: React.Dispatch<React.SetStateAction<SystemConfig>>;
+  setConfig: (config: SystemConfig) => void;
   invoices: Invoice[];
   plans: Plan[];
 }
@@ -19,7 +19,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ config, setConfig, invoi
     const rows = invoices.map(inv => [
       inv.invoiceNumber,
       new Date(inv.date).toLocaleDateString(),
-      "Customer Name", // In a real app this would be specific
+      "Customer Name",
       inv.amount,
       config.gstPercentage,
       inv.gstAmount,
