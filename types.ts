@@ -1,8 +1,6 @@
 
-
 export interface Lead {
   id: string;
-  // Added userId to support per-user lead management and fix property existence errors
   userId?: string;
   generatedDate: string;
   searchCity: string;
@@ -29,6 +27,8 @@ export interface Lead {
   status: 'new' | 'processed' | 'error';
   contacted: boolean;
   sources?: { title: string; uri: string }[];
+  socialSignals?: string; // e.g., "Active on IG", "Verified GMB"
+  verificationConfidence?: 'high' | 'medium' | 'low';
 }
 
 export type Platform = 'all' | 'instagram' | 'linkedin' | 'facebook' | 'x' | 'google_maps' | 'google_search' | 'yelp' | 'yellow_pages' | 'clutch' | 'trustpilot';

@@ -4,12 +4,18 @@ import { Lead, SearchParams, Platform } from "../types.ts";
 
 const getPlatformInstruction = (platform: Platform): string => {
   switch (platform) {
-    case 'google_maps': return 'prioritizing verified Google Business Profiles with high physical foot traffic indicators';
-    case 'google_search': return 'crawling deep web directories, local chambers of commerce, and niche-specific registries';
-    case 'instagram': return 'analyzing engagement metrics, recent story activity, and linktree configurations for legitimacy';
-    case 'linkedin': return 'evaluating corporate headcounts, recent hiring activity, and employee verification status';
-    case 'facebook': return 'checking community responsiveness, recent post frequency, and verified business badges';
-    default: return 'executing a multi-vector search across maps, social signals, and corporate registries';
+    case 'google_maps': 
+      return 'DATA SOURCE: Google Maps / GMB. Focus on physical storefronts. VERIFY: Rating and address accuracy.';
+    case 'google_search': 
+      return 'DATA SOURCE: General Web. Look for official corporate footers, contact pages, and legal notices.';
+    case 'instagram': 
+      return 'DATA SOURCE: Instagram. Find the handle, bio link, and check for an "Email" or "Call" button in the profile metadata.';
+    case 'linkedin': 
+      return 'DATA SOURCE: LinkedIn. Extract the official company page, headquarters location, and verified employee count.';
+    case 'facebook': 
+      return 'DATA SOURCE: Facebook. Find the "About" section, official page name, and verified business status.';
+    default: 
+      return 'MULTI-VECTOR: Verify data across all available platforms. Reject any lead where phone/email seems generated or placeholder.';
   }
 };
 
@@ -28,14 +34,10 @@ const extractJson = (text: string): any[] => {
         console.error("Failed to parse regex-extracted array", innerE);
       }
     }
-    throw new Error("AI output format error. Please try a more specific search term.");
+    throw new Error("AI output format error. Details: The extraction engine returned malformed data.");
   }
 };
 
-/**
- * Executes a function with exponential backoff retries.
- * Useful for handling 429 (Rate Limit) and 500 (Internal Error).
- */
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   maxRetries: number = 2,
@@ -49,11 +51,8 @@ async function retryWithBackoff<T>(
       lastError = err;
       const errorMsg = err.message || "";
       const isRateLimit = errorMsg.includes("429") || errorMsg.toLowerCase().includes("quota");
-      const isServerError = errorMsg.includes("500") || errorMsg.includes("503");
-      
-      if (isRateLimit || isServerError) {
+      if (isRateLimit) {
         const delay = initialDelay * Math.pow(2, i);
-        console.warn(`Attempt ${i + 1} failed. Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
@@ -66,31 +65,30 @@ async function retryWithBackoff<T>(
 export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
   const apiKey = process.env.API_KEY;
   if (!apiKey || apiKey === "undefined" || apiKey === "") {
-    throw new Error("API configuration missing. Please ensure the API_KEY environment variable is set in your Netlify dashboard.");
+    throw new Error("API configuration missing. Please ensure your project settings are correctly configured.");
   }
 
-  // Verification log for debugging deployment issues
-  console.info("Initializing Lead Extraction using model: gemini-3-flash-preview");
-
   const ai = new GoogleGenAI({ apiKey });
-  const platformContext = getPlatformInstruction(params.platform);
+  const platformConstraint = getPlatformInstruction(params.platform);
   const targetQuantity = params.quantity === 'unlimited' ? '20' : params.quantity;
 
-  const noWebsiteConstraint = params.noWebsiteOnly 
-    ? "MANDATORY: Return ONLY businesses that do NOT have a website listed."
-    : "Include businesses regardless of website status.";
-
-  const whatsappConstraint = params.whatsappOnly
-    ? "WHATSAPP: Focus on leads where a mobile number or WhatsApp contact is evident."
-    : "";
-
   const prompt = `
-    TASK: Generate a high-fidelity business intelligence report for "${params.query}" in "${params.city}, ${params.country}".
-    QUANTITY: Extract exactly ${targetQuantity} unique, active leads.
-    VECTORS: ${platformContext}.
-    CONSTRAINTS: ${noWebsiteConstraint} ${whatsappConstraint}
+    URGENT BUSINESS TASK: Extract high-accuracy business intelligence for "${params.query}" in "${params.city}, ${params.country}".
     
-    Ensure all extracted data is current. Return results as a valid JSON array.
+    CRITICAL RULES FOR DATA ACCURACY:
+    1. NO HALLUCINATION: If you cannot find a real phone number or email, return "". NEVER guess.
+    2. LOCALIZATION: All leads MUST be physically located in "${params.city}". 
+    3. VALIDATION: Check for active signs of life (recent reviews, active websites, valid social links).
+    4. SOURCE LOCK: ${platformConstraint}
+    5. DATA CLEANING: Ensure proper capitalization. Remove any "(123) 456-7890" or "example@domain.com" placeholders.
+
+    SPECIFIC EXTRACTION INSTRUCTIONS:
+    - Use Google Search tool to browse specific "Contact" or "About" pages of identified businesses.
+    - Identify "${params.platform}" profiles first, then verify contact details on their official website.
+    - If "No Website Only" is active: ${params.noWebsiteOnly ? 'YES' : 'NO'}.
+    - If "WhatsApp Priority" is active: ${params.whatsappOnly ? 'YES' : 'NO'}.
+
+    QUANTITY: Exactly ${targetQuantity} leads.
   `;
 
   try {
@@ -99,7 +97,7 @@ export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
         model: "gemini-3-flash-preview",
         contents: prompt,
         config: {
-          systemInstruction: "You are the LeadScrape Architect. Extract accurate business entities. QualityScore (0-100) must reflect the data completeness. Output ONLY raw JSON.",
+          systemInstruction: `You are the LeadScrape Master Auditor. Accuracy is 100x more important than quantity. You reject low-quality leads. Use the googleSearch tool for deep verification. You extract ONLY valid, real-world data points. If a detail is missing, return an empty string.`,
           tools: [{ googleSearch: {} }],
           responseMimeType: "application/json",
           responseSchema: {
@@ -107,25 +105,27 @@ export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
             items: {
               type: Type.OBJECT,
               properties: {
-                companyName: { type: Type.STRING },
+                companyName: { type: Type.STRING, description: "Official legal name of the business." },
                 category: { type: Type.STRING },
                 city: { type: Type.STRING },
                 country: { type: Type.STRING },
-                coordinates: { type: Type.STRING },
-                website: { type: Type.STRING },
-                phoneNumber: { type: Type.STRING },
+                coordinates: { type: Type.STRING, description: "Latitude and longitude if available." },
+                website: { type: Type.STRING, description: "Full URL starting with https://" },
+                phoneNumber: { type: Type.STRING, description: "International format: +[country][number]" },
                 email: { type: Type.STRING },
                 linkedin: { type: Type.STRING },
                 facebook: { type: Type.STRING },
                 instagram: { type: Type.STRING },
-                description: { type: Type.STRING },
+                description: { type: Type.STRING, description: "Brief accurate summary of what they do." },
                 rating: { type: Type.STRING },
                 reviewCount: { type: Type.STRING },
                 address: { type: Type.STRING },
-                qualityScore: { type: Type.NUMBER },
-                qualityReasoning: { type: Type.STRING },
+                qualityScore: { type: Type.NUMBER, description: "Score 0-100 based on data completeness and verification." },
+                qualityReasoning: { type: Type.STRING, description: "Why is this lead high/low quality?" },
+                socialSignals: { type: Type.STRING, description: "e.g. 'Highly active on IG', 'Recently reviewed'" },
+                verificationConfidence: { type: Type.STRING, enum: ["high", "medium", "low"] }
               },
-              required: ["companyName", "category", "qualityScore"]
+              required: ["companyName", "category", "qualityScore", "verificationConfidence"]
             }
           }
         }
@@ -135,10 +135,12 @@ export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
     const generatedText = response.text ?? "";
     const rawLeads = extractJson(generatedText);
     const today = new Date().toISOString();
+    
+    // Extract real sources from grounding metadata for proof
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const webSources = groundingChunks
       .filter((c: any) => c.web)
-      .map((c: any) => ({ title: c.web.title || "Source link", uri: c.web.uri }));
+      .map((c: any) => ({ title: c.web.title || "Verification Link", uri: c.web.uri }));
 
     return rawLeads.map((item: any, index: number) => ({
       ...item,
@@ -149,27 +151,12 @@ export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
       leadNumber: index + 1,
       status: 'new',
       contacted: false,
-      qualityScore: Number(item.qualityScore) || 75,
-      sources: webSources.length > 0 ? webSources.slice(index % webSources.length, (index % webSources.length) + 2) : []
+      sources: webSources.length > 0 ? webSources.slice(index % webSources.length, (index % webSources.length) + 1) : []
     }));
   } catch (err: any) {
     let cleanMessage = err.message || "Unknown error";
-    
-    // Try to parse JSON error message from SDK
-    try {
-      if (cleanMessage.startsWith('{')) {
-        const parsed = JSON.parse(cleanMessage);
-        if (parsed.error && parsed.error.message) {
-          cleanMessage = parsed.error.message;
-        }
-      }
-    } catch (e) { /* use raw message if parsing fails */ }
-
-    if (cleanMessage.includes("429") || cleanMessage.toLowerCase().includes("quota")) {
-      throw new Error("API Quota Reached: The Gemini Flash model is currently at its free-tier limit. Please wait 60 seconds or upgrade your Google Cloud Project to a paid plan for higher limits.");
-    }
-    
-    throw new Error(`Extraction Failed: ${cleanMessage}`);
+    if (cleanMessage.includes("429")) throw new Error("API Limit Reached: The extraction engine is cooling down. Please wait 60 seconds.");
+    throw new Error(`Extraction Error: ${cleanMessage}`);
   }
 };
 
