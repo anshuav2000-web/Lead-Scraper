@@ -1,0 +1,7 @@
+{
+  "name": "Canvas Cartel LeadScrape",
+  "description": "An advanced lead generation and enrichment platform that uses AI to find local businesses across social platforms and syncs them directly to your automation webhooks.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
