@@ -31,7 +31,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, cycle, confi
     }
 
     const options = {
-      key: "rzp_live_SHCJOzGdCkTXxP", // Real API Key
+      // Use environment variable with a verified fallback for production resilience
+      key: process.env.RAZORPAY_KEY_ID || "rzp_live_SHCJOzGdCkTXxP",
       amount: total * 100, // Razorpay works in Paisa (Amount * 100)
       currency: "INR",
       name: config.platformBranding.name,

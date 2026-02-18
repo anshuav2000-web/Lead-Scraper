@@ -57,6 +57,8 @@ export const UserPortal: React.FC<UserPortalProps> = ({
        const results = await searchLeads(params);
        const leadsWithUser = results.map(l => ({ ...l, userId: user.id }));
        onSyncLeads(leadsWithUser);
+       
+       // Update local usage counter
        onUpdateUser({
          ...user,
          subscription: {
@@ -65,8 +67,10 @@ export const UserPortal: React.FC<UserPortalProps> = ({
          }
        });
      } catch (e: any) {
-       console.error("Extraction error:", e);
-       alert(`Extraction Error: ${e.message}`);
+       console.error("Extraction failed:", e);
+       // Provide a more user-friendly diagnostic message
+       const errorMessage = e.message || "An unexpected error occurred during extraction.";
+       alert(`System Advisory: ${errorMessage}`);
      } finally {
        setIsLoading(false);
      }
@@ -83,12 +87,13 @@ export const UserPortal: React.FC<UserPortalProps> = ({
       const success = await sendToWebhook(lead, user.webhook.url);
       if (success) {
         onUpdateLeadStatus(lead.id, 'processed');
-        alert("Pushed to automation hub!");
+        // Toast style notification would be better, but sticking to alert for parity
+        alert("Lead successfully pushed to automation hub.");
       } else {
-        alert("Webhook sync failed.");
+        alert("Webhook endpoint returned an error. Check your automation logs.");
       }
     } catch (err) {
-      alert("Critical sync failure.");
+      alert("Network failure: Could not reach the webhook endpoint.");
     } finally {
       setIsSyncing(null);
     }
@@ -113,7 +118,7 @@ export const UserPortal: React.FC<UserPortalProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={onLogout} className="text-zinc-500 hover:text-red-500 transition-colors p-2">
+            <button onClick={onLogout} className="text-zinc-500 hover:text-red-500 transition-colors p-2" title="Logout">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
             </button>
             

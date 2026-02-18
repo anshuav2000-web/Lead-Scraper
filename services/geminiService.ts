@@ -16,7 +16,8 @@ const getPlatformInstruction = (platform: Platform): string => {
 const extractJson = (text: string): any[] => {
   if (!text) return [];
   try {
-    const parsed = JSON.parse(text);
+    const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleaned);
     return Array.isArray(parsed) ? parsed : [parsed];
   } catch (e) {
     const arrayMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
@@ -27,81 +28,108 @@ const extractJson = (text: string): any[] => {
         console.error("Failed to parse regex-extracted array", innerE);
       }
     }
-    const objectMatch = text.match(/\{\s*[\s\S]*\}\s*/);
-    if (objectMatch) {
-      try {
-        return [JSON.parse(objectMatch[0])];
-      } catch (innerE) {
-        console.error("Failed to parse regex-extracted object", innerE);
-      }
-    }
-    throw new Error("AI output was not valid JSON. Please try again or refine the query.");
+    throw new Error("AI output format error. Please try a more specific search term.");
   }
 };
 
+/**
+ * Executes a function with exponential backoff retries.
+ * Useful for handling 429 (Rate Limit) and 500 (Internal Error).
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 2,
+  initialDelay: number = 2000
+): Promise<T> {
+  let lastError: any;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      lastError = err;
+      const errorMsg = err.message || "";
+      const isRateLimit = errorMsg.includes("429") || errorMsg.toLowerCase().includes("quota");
+      const isServerError = errorMsg.includes("500") || errorMsg.includes("503");
+      
+      if (isRateLimit || isServerError) {
+        const delay = initialDelay * Math.pow(2, i);
+        console.warn(`Attempt ${i + 1} failed. Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError;
+}
+
 export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
   const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey === "undefined") {
-    throw new Error("Gemini API Key is missing. If you are on Netlify, please set the 'API_KEY' variable in Site Configuration > Environment Variables and re-deploy.");
+  if (!apiKey || apiKey === "undefined" || apiKey === "") {
+    throw new Error("API configuration missing. Please ensure the API_KEY environment variable is set in your Netlify dashboard.");
   }
+
+  // Verification log for debugging deployment issues
+  console.info("Initializing Lead Extraction using model: gemini-3-flash-preview");
 
   const ai = new GoogleGenAI({ apiKey });
   const platformContext = getPlatformInstruction(params.platform);
   const targetQuantity = params.quantity === 'unlimited' ? '20' : params.quantity;
 
   const noWebsiteConstraint = params.noWebsiteOnly 
-    ? "MANDATORY: Return ONLY businesses that do NOT have a website."
-    : "Include businesses with or without websites.";
+    ? "MANDATORY: Return ONLY businesses that do NOT have a website listed."
+    : "Include businesses regardless of website status.";
 
   const whatsappConstraint = params.whatsappOnly
-    ? "WHATSAPP: Prioritize mobile numbers and businesses mentioning WhatsApp availability."
+    ? "WHATSAPP: Focus on leads where a mobile number or WhatsApp contact is evident."
     : "";
 
   const prompt = `
-    Find exactly ${targetQuantity} leads for "${params.query}" in "${params.city}, ${params.country}".
-    Source focus: ${platformContext}.
-    ${noWebsiteConstraint}
-    ${whatsappConstraint}
+    TASK: Generate a high-fidelity business intelligence report for "${params.query}" in "${params.city}, ${params.country}".
+    QUANTITY: Extract exactly ${targetQuantity} unique, active leads.
+    VECTORS: ${platformContext}.
+    CONSTRAINTS: ${noWebsiteConstraint} ${whatsappConstraint}
     
-    Verify business activity. Return a JSON array of objects.
+    Ensure all extracted data is current. Return results as a valid JSON array.
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
-      contents: prompt,
-      config: {
-        systemInstruction: "You are the LeadScrape Architect. You extract accurate business data including Phone, Email, Socials. QualityScore must be 0-100. Return valid JSON only.",
-        tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 15000 },
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              companyName: { type: Type.STRING },
-              category: { type: Type.STRING },
-              city: { type: Type.STRING },
-              country: { type: Type.STRING },
-              coordinates: { type: Type.STRING },
-              website: { type: Type.STRING },
-              phoneNumber: { type: Type.STRING },
-              email: { type: Type.STRING },
-              linkedin: { type: Type.STRING },
-              facebook: { type: Type.STRING },
-              instagram: { type: Type.STRING },
-              description: { type: Type.STRING },
-              rating: { type: Type.STRING },
-              reviewCount: { type: Type.STRING },
-              address: { type: Type.STRING },
-              qualityScore: { type: Type.NUMBER },
-              qualityReasoning: { type: Type.STRING },
-            },
-            required: ["companyName", "category", "qualityScore"]
+    const response = await retryWithBackoff(async () => {
+      return await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: {
+          systemInstruction: "You are the LeadScrape Architect. Extract accurate business entities. QualityScore (0-100) must reflect the data completeness. Output ONLY raw JSON.",
+          tools: [{ googleSearch: {} }],
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                companyName: { type: Type.STRING },
+                category: { type: Type.STRING },
+                city: { type: Type.STRING },
+                country: { type: Type.STRING },
+                coordinates: { type: Type.STRING },
+                website: { type: Type.STRING },
+                phoneNumber: { type: Type.STRING },
+                email: { type: Type.STRING },
+                linkedin: { type: Type.STRING },
+                facebook: { type: Type.STRING },
+                instagram: { type: Type.STRING },
+                description: { type: Type.STRING },
+                rating: { type: Type.STRING },
+                reviewCount: { type: Type.STRING },
+                address: { type: Type.STRING },
+                qualityScore: { type: Type.NUMBER },
+                qualityReasoning: { type: Type.STRING },
+              },
+              required: ["companyName", "category", "qualityScore"]
+            }
           }
         }
-      }
+      });
     });
 
     const generatedText = response.text ?? "";
@@ -110,7 +138,7 @@ export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const webSources = groundingChunks
       .filter((c: any) => c.web)
-      .map((c: any) => ({ title: c.web.title || "Verification Link", uri: c.web.uri }));
+      .map((c: any) => ({ title: c.web.title || "Source link", uri: c.web.uri }));
 
     return rawLeads.map((item: any, index: number) => ({
       ...item,
@@ -121,11 +149,27 @@ export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
       leadNumber: index + 1,
       status: 'new',
       contacted: false,
-      qualityScore: Number(item.qualityScore) || 70,
+      qualityScore: Number(item.qualityScore) || 75,
       sources: webSources.length > 0 ? webSources.slice(index % webSources.length, (index % webSources.length) + 2) : []
     }));
   } catch (err: any) {
-    throw new Error(`Extraction Engine Error: ${err.message}`);
+    let cleanMessage = err.message || "Unknown error";
+    
+    // Try to parse JSON error message from SDK
+    try {
+      if (cleanMessage.startsWith('{')) {
+        const parsed = JSON.parse(cleanMessage);
+        if (parsed.error && parsed.error.message) {
+          cleanMessage = parsed.error.message;
+        }
+      }
+    } catch (e) { /* use raw message if parsing fails */ }
+
+    if (cleanMessage.includes("429") || cleanMessage.toLowerCase().includes("quota")) {
+      throw new Error("API Quota Reached: The Gemini Flash model is currently at its free-tier limit. Please wait 60 seconds or upgrade your Google Cloud Project to a paid plan for higher limits.");
+    }
+    
+    throw new Error(`Extraction Failed: ${cleanMessage}`);
   }
 };
 
@@ -137,10 +181,8 @@ export const sendToWebhook = async (lead: Lead, webhookUrl: string): Promise<boo
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         event: "lead_discovered",
-        lead: {
-          ...lead,
-          syncTime: new Date().toISOString()
-        }
+        timestamp: new Date().toISOString(),
+        lead: lead
       }),
     });
     return response.ok;
