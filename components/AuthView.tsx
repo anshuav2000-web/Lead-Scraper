@@ -10,9 +10,10 @@ interface AuthViewProps {
   onRegister: (name: string, email: string, pass: string) => Promise<{ success: boolean; message: string }>;
   onBypass: () => void;
   branding: { name: string; tagline: string; primaryColor: string };
+  error?: string | null;
 }
 
-export const AuthView: React.FC<AuthViewProps> = ({ isRegistering, setIsRegistering, onLogin, onRegister, onBypass, branding }) => {
+export const AuthView: React.FC<AuthViewProps> = ({ isRegistering, setIsRegistering, onLogin, onRegister, onBypass, branding, error }) => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [pass, setPass] = useState('');
@@ -162,6 +163,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ isRegistering, setIsRegister
 
              <div className="max-w-sm mx-auto w-full">
                 <div className="mb-8">
+                   {error && (
+                     <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl animate-pulse">
+                       <p className="text-[10px] font-black text-red-500 uppercase tracking-widest text-center">
+                         {error}
+                       </p>
+                     </div>
+                   )}
                    <h3 className="text-2xl font-black text-white tracking-tight">
                       {isResetting ? 'Reset Password' : isRegistering ? 'Sign Up' : 'Welcome Back'}
                    </h3>

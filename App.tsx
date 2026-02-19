@@ -133,10 +133,13 @@ const App: React.FC = () => {
     } catch (err: any) {
       console.error("Supabase Connection Error:", err);
       setDbError(err.message);
+      if (err.message.includes("profiles") || err.message.includes("PGRST205") || err.message.includes("DATABASE_NOT_INITIALIZED")) {
+        setView('setup');
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [currentUser, fetchAllUsers]);
+  }, [fetchAllUsers]);
 
   useEffect(() => {
     const initializeSession = async () => {
@@ -253,6 +256,7 @@ const App: React.FC = () => {
           onRegister={handleRegister} 
           onBypass={() => setView('admin')}
           branding={config.platformBranding}
+          error={dbError}
         />
       )}
       {view === 'user' && currentUser && (
