@@ -123,7 +123,7 @@ const App: React.FC = () => {
         setLeads(fetchedLeads);
         setInvoices(fetchedInvoices);
         
-        const keySelected = await window.aistudio.hasSelectedApiKey();
+        const keySelected = window.aistudio ? await window.aistudio.hasSelectedApiKey() : true;
         if (!keySelected) {
           setView('apiKey');
         } else {
@@ -304,7 +304,9 @@ const App: React.FC = () => {
               <Button 
                 className="w-full py-5 text-sm"
                 onClick={async () => {
-                  await window.aistudio.openSelectKey();
+                  if (window.aistudio) {
+                    await window.aistudio.openSelectKey();
+                  }
                   handleApiKeySuccess();
                 }}
               >

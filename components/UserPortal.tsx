@@ -70,7 +70,9 @@ export const UserPortal: React.FC<UserPortalProps> = ({
        console.error("Extraction failed:", e);
        if (e.message.includes("Requested entity was not found")) {
           alert("Your API key session has expired or is invalid. Please re-authenticate.");
-          await window.aistudio.openSelectKey();
+          if (window.aistudio) {
+             await window.aistudio.openSelectKey();
+          }
           return;
        }
        alert(`Extraction Error: ${e.message || "Connection failure."}`);
