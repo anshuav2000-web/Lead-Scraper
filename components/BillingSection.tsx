@@ -22,18 +22,24 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ user, invoices, 
   };
 
   return (
-    <div className="animate-fade-in space-y-10 max-w-5xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-zinc-800 pb-8">
-        <div>
-          <h2 className="text-4xl font-black text-white tracking-tighter">Billing & Usage</h2>
-          <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px] mt-1">Manage your enterprise subscription</p>
+    <div className="animate-fade-in space-y-16 max-w-7xl mx-auto">
+      <div className="text-center max-w-4xl mx-auto flex flex-col items-center space-y-8">
+        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08]">
+           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Financial Hub</span>
         </div>
+        <h2 className="text-6xl md:text-8xl font-extrabold text-white tracking-tight leading-[0.95] md:leading-[0.85] text-gradient">
+          Vault <br />
+          <span className="text-red-600">Management.</span>
+        </h2>
+        <p className="text-zinc-400 font-medium text-lg md:text-xl max-w-2xl leading-relaxed opacity-80">
+          Manage your enterprise subscription, track usage metrics, and download invoice history.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Subscription Info Card */}
         <div className="lg:col-span-4 space-y-6">
-           <div className="bg-zinc-900/50 rounded-[2.5rem] border border-zinc-800 p-8">
+           <div className="bg-zinc-900/30 rounded-[2.5rem] border border-white/[0.05] p-8 backdrop-blur-xl">
               <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-6">Current Package</h3>
               <div className="space-y-4">
                  <div className="bg-zinc-950 p-6 rounded-3xl border border-zinc-800 relative overflow-hidden">
@@ -53,7 +59,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ user, invoices, 
               </div>
            </div>
 
-           <div className="bg-zinc-900/50 rounded-[2.5rem] border border-zinc-800 p-8">
+           <div className="bg-zinc-900/30 rounded-[2.5rem] border border-white/[0.05] p-8 backdrop-blur-xl">
               <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-6">Usage Metrics</h3>
               <div className="space-y-2">
                  <div className="flex justify-between items-end">
@@ -71,8 +77,8 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ user, invoices, 
         </div>
 
         {/* Invoice List */}
-        <div className="lg:col-span-8 bg-zinc-900/50 rounded-[2.5rem] border border-zinc-800 overflow-hidden flex flex-col">
-           <div className="p-8 border-b border-zinc-800 flex justify-between items-center">
+        <div className="lg:col-span-8 bg-zinc-900/30 rounded-[2.5rem] border border-white/[0.05] backdrop-blur-xl overflow-hidden flex flex-col">
+           <div className="p-8 border-b border-white/[0.05] flex justify-between items-center">
               <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Transaction History</h3>
            </div>
            <div className="flex-1 overflow-x-auto">

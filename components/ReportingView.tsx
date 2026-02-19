@@ -102,31 +102,38 @@ export const ReportingView: React.FC<ReportingViewProps> = ({ leads }) => {
   }
 
   return (
-    <div className="animate-fade-in space-y-8 md:space-y-12">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-        <div>
-          <h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter leading-tight">Campaign Intelligence</h2>
-          <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px] mt-1">Real-time Lead Maturity Metrics</p>
+    <div className="animate-fade-in space-y-16">
+      <div className="text-center max-w-4xl mx-auto flex flex-col items-center space-y-8">
+        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08]">
+           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Real-time Metrics</span>
         </div>
-        <div className="flex flex-wrap gap-4 w-full md:w-auto">
+        <h2 className="text-6xl md:text-8xl font-extrabold text-white tracking-tight leading-[0.95] md:leading-[0.85] text-gradient">
+          Actionable <br />
+          <span className="text-red-600">Intelligence.</span>
+        </h2>
+        <p className="text-zinc-400 font-medium text-lg md:text-xl max-w-2xl leading-relaxed opacity-80">
+          Visualize your lead maturity and pipeline performance with surgical precision.
+        </p>
+        
+        <div className="flex flex-wrap gap-4 justify-center pt-4">
            <Button 
             variant="secondary" 
             onClick={exportToCSV}
-            className="flex-1 md:flex-none bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white"
+            className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white"
            >
              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
              CSV Export
            </Button>
-           <div className="flex-1 md:flex-none bg-zinc-900/50 border border-zinc-800 px-6 py-3 rounded-2xl">
-              <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest block mb-1 text-center md:text-left">Maturity Score</span>
-              <span className="text-2xl font-black text-red-500 block text-center md:text-left">{stats.avgQuality}%</span>
+           <div className="bg-zinc-900/50 border border-zinc-800 px-8 py-3 rounded-2xl flex flex-col items-center md:items-start">
+              <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest block mb-1">Maturity Score</span>
+              <span className="text-2xl font-black text-red-500 block">{stats.avgQuality}%</span>
            </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {/* Status Breakdown */}
-        <div className="bg-zinc-900/50 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-800 p-8 flex flex-col items-center">
+        <div className="bg-zinc-900/30 rounded-[2.5rem] border border-white/[0.05] p-8 flex flex-col items-center backdrop-blur-xl">
            <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest self-start mb-8">Pipeline Maturity</h3>
            <div className="h-64 w-full relative">
               <ResponsiveContainer width="100%" height="100%">
@@ -167,7 +174,7 @@ export const ReportingView: React.FC<ReportingViewProps> = ({ leads }) => {
         </div>
 
         {/* Quality Mix */}
-        <div className="bg-zinc-900/50 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-800 p-8">
+        <div className="bg-zinc-900/30 rounded-[2.5rem] border border-white/[0.05] p-8 backdrop-blur-xl">
            <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-8">Data Fidelity Tiers</h3>
            <div className="space-y-6">
               {stats.qualityRanges.map(range => (
@@ -186,14 +193,14 @@ export const ReportingView: React.FC<ReportingViewProps> = ({ leads }) => {
               ))}
            </div>
            <div className="mt-12 bg-red-600/5 border border-red-600/10 p-6 rounded-3xl">
-              <p className="text-[10px] text-red-500/80 font-bold leading-relaxed uppercase tracking-widest italic">
+              <p className="text-[10px] text-red-500/80 font-bold leading-relaxed uppercase tracking-widest italic text-center">
                  "Confidence is calculated based on vitality signals and communication verification."
               </p>
            </div>
         </div>
 
         {/* Category Analysis */}
-        <div className="bg-zinc-900/50 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-800 p-8 md:col-span-2 lg:col-span-1">
+        <div className="bg-zinc-900/30 rounded-[2.5rem] border border-white/[0.05] p-8 md:col-span-2 lg:col-span-1 backdrop-blur-xl">
            <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-8">Top Verticals</h3>
            <div className="h-full max-h-[300px]">
               <ResponsiveContainer width="100%" height="100%">

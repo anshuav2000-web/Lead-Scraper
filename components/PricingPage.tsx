@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Plan, SystemConfig, User, BillingCycle } from '../types.ts';
 import { Button } from './Button.tsx';
 
+// Define the missing PricingPageProps interface
 interface PricingPageProps {
   plans: Plan[];
   config: SystemConfig;
@@ -10,26 +11,27 @@ interface PricingPageProps {
   onSubscribe: (planId: string, cycle: BillingCycle) => void;
 }
 
+// PricingPage component implementation
 export const PricingPage: React.FC<PricingPageProps> = ({ plans, config, user, onSubscribe }) => {
   const [cycle, setCycle] = useState<BillingCycle>('monthly');
 
   return (
     <div className="animate-fade-in py-12">
-      <div className="text-center max-w-3xl mx-auto mb-16 space-y-6">
+      <div className="text-center max-w-4xl mx-auto mb-16 space-y-8 flex flex-col items-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest border border-red-500/20">
           Scale your pipeline
         </div>
-        <h1 className="text-5xl md:text-7xl font-black tracking-tight text-white leading-tight">
+        <h1 className="text-6xl md:text-8xl font-extrabold text-white tracking-tight leading-[0.95] md:leading-[0.85] text-gradient">
           Ready to dominate <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-600">your market?</span>
+          <span className="text-red-600">your market?</span>
         </h1>
-        <p className="text-zinc-400 font-medium text-lg leading-relaxed">
+        <p className="text-zinc-400 font-medium text-lg md:text-xl max-w-2xl leading-relaxed opacity-80">
           Choose a plan that matches your extraction velocity. 
           {cycle === 'yearly' ? ' Yearly billing saves you over 20%.' : ' Monthly billing for total flexibility.'}
         </p>
 
         {/* Cycle Toggle */}
-        <div className="flex items-center justify-center gap-4 pt-8">
+        <div className="flex items-center justify-center gap-4 pt-4">
            <span className={`text-xs font-black uppercase tracking-widest transition-colors ${cycle === 'monthly' ? 'text-white' : 'text-zinc-600'}`}>Monthly</span>
            <button 
             onClick={() => setCycle(cycle === 'monthly' ? 'yearly' : 'monthly')}

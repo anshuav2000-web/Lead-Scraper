@@ -5,17 +5,17 @@ import { Lead, SearchParams, Platform } from "../types.ts";
 const getPlatformInstruction = (platform: Platform): string => {
   switch (platform) {
     case 'google_maps': 
-      return 'DATA SOURCE: Google Maps / GMB. Focus on physical storefronts. VERIFY: Rating and address accuracy.';
+      return 'HARD CONSTRAINT: Every lead MUST be a verified Google Business Profile. Cross-reference coordinates.';
     case 'google_search': 
-      return 'DATA SOURCE: General Web. Look for official corporate footers, contact pages, and legal notices.';
+      return 'SOURCE: Aggressively crawl official business registries and directories.';
     case 'instagram': 
-      return 'DATA SOURCE: Instagram. Find the handle, bio link, and check for an "Email" or "Call" button in the profile metadata.';
+      return 'HARD CONSTRAINT: Target active Instagram handles only.';
     case 'linkedin': 
-      return 'DATA SOURCE: LinkedIn. Extract the official company page, headquarters location, and verified employee count.';
+      return 'HARD CONSTRAINT: Extract verified LinkedIn Company Pages.';
     case 'facebook': 
-      return 'DATA SOURCE: Facebook. Find the "About" section, official page name, and verified business status.';
+      return 'HARD CONSTRAINT: Target verified Facebook Pages.';
     default: 
-      return 'MULTI-VECTOR: Verify data across all available platforms. Reject any lead where phone/email seems generated or placeholder.';
+      return 'MULTI-VECTOR: Harmonize signals from social and maps.';
   }
 };
 
@@ -34,14 +34,14 @@ const extractJson = (text: string): any[] => {
         console.error("Failed to parse regex-extracted array", innerE);
       }
     }
-    throw new Error("AI output format error. Details: The extraction engine returned malformed data.");
+    throw new Error("AI intelligence output was malformed.");
   }
 };
 
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
-  maxRetries: number = 2,
-  initialDelay: number = 2000
+  maxRetries: number = 3,
+  initialDelay: number = 3000
 ): Promise<T> {
   let lastError: any;
   for (let i = 0; i < maxRetries; i++) {
@@ -49,9 +49,7 @@ async function retryWithBackoff<T>(
       return await fn();
     } catch (err: any) {
       lastError = err;
-      const errorMsg = err.message || "";
-      const isRateLimit = errorMsg.includes("429") || errorMsg.toLowerCase().includes("quota");
-      if (isRateLimit) {
+      if (err.message.includes("429") || err.message.toLowerCase().includes("quota")) {
         const delay = initialDelay * Math.pow(2, i);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
@@ -63,31 +61,46 @@ async function retryWithBackoff<T>(
 }
 
 export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
+  // Use the key injected by the platform
   const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey === "undefined" || apiKey === "") {
-    throw new Error("API configuration missing. Please ensure your project settings are correctly configured.");
-  }
+  if (!apiKey) throw new Error("Cloud authentication failed. Please connect your API key.");
 
   const ai = new GoogleGenAI({ apiKey });
   const platformConstraint = getPlatformInstruction(params.platform);
-  const targetQuantity = params.quantity === 'unlimited' ? '20' : params.quantity;
+  const targetQuantity = params.quantity === 'unlimited' ? '25' : params.quantity;
+
+  const noWebRule = params.noWebsiteOnly 
+    ? "CRITICAL MANDATE: You MUST REJECT any business that has an official website URL. ONLY extract local businesses that rely solely on social media or phone. If you find a URL, DISCARD the lead immediately." 
+    : "";
+  
+  const waRule = params.whatsappOnly 
+    ? "CRITICAL MANDATE: ONLY extract businesses that have a phone number verified for WhatsApp communication. Look for 'wa.me' links or WhatsApp status icons in profiles." 
+    : "";
+
+  const newBizRule = params.onlyNewBusinesses
+    ? "STRICT TEMPORAL CONSTRAINT: ONLY extract businesses that are NEWLY OPENED or RECENTLY STARTED (within the last 3-6 months). Look specifically for keywords like 'Grand Opening', 'Coming Soon', 'Newly Opened', 'Now Open', or businesses with extremely low review counts (less than 5 reviews). Verify social media creation dates where possible. REJECT established entities."
+    : "";
 
   const prompt = `
-    URGENT BUSINESS TASK: Extract high-accuracy business intelligence for "${params.query}" in "${params.city}, ${params.country}".
+    HIGH-FIDELITY EXTRACTION PROTOCOL:
+    Target: "${params.query}" in "${params.city}, ${params.country}"
+    Platform: ${platformConstraint}
     
-    CRITICAL RULES FOR DATA ACCURACY:
-    1. NO HALLUCINATION: If you cannot find a real phone number or email, return "". NEVER guess.
-    2. LOCALIZATION: All leads MUST be physically located in "${params.city}". 
-    3. VALIDATION: Check for active signs of life (recent reviews, active websites, valid social links).
-    4. SOURCE LOCK: ${platformConstraint}
-    5. DATA CLEANING: Ensure proper capitalization. Remove any "(123) 456-7890" or "example@domain.com" placeholders.
+    NEURAL FILTERS (STRICT ENFORCEMENT):
+    ${noWebRule}
+    ${waRule}
+    ${newBizRule}
 
-    SPECIFIC EXTRACTION INSTRUCTIONS:
-    - Use Google Search tool to browse specific "Contact" or "About" pages of identified businesses.
-    - Identify "${params.platform}" profiles first, then verify contact details on their official website.
-    - If "No Website Only" is active: ${params.noWebsiteOnly ? 'YES' : 'NO'}.
-    - If "WhatsApp Priority" is active: ${params.whatsappOnly ? 'YES' : 'NO'}.
-
+    INTELLIGENCE MANDATES:
+    1. DEEP AUDIT: Use Google Search tool to verify details. 
+    2. DISCARD RULE: Do not return leads that violate the NEURAL FILTERS. If Only New Businesses is on and you cannot find proof of recent start, discard the lead.
+    3. DATA SET: For each lead, find: Company Name, Category, Verified Email, Direct Phone, Description, Growth Signals, Tech Stack (if any), Social Handles, Business Hours, Rating, reviewCount, address.
+    4. CORPORATE INTELLIGENCE: Also extract (if discoverable):
+       - Industry: Specific industry niche.
+       - Company Size: Estimated headcount.
+       - Revenue: Estimated annual revenue.
+       - Funding: Current funding status.
+    
     QUANTITY: Exactly ${targetQuantity} leads.
   `;
 
@@ -97,7 +110,7 @@ export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
         model: "gemini-3-flash-preview",
         contents: prompt,
         config: {
-          systemInstruction: `You are the LeadScrape Master Auditor. Accuracy is 100x more important than quantity. You reject low-quality leads. Use the googleSearch tool for deep verification. You extract ONLY valid, real-world data points. If a detail is missing, return an empty string.`,
+          systemInstruction: `You are the Cartel Scraper Lead Auditor. You strictly follow REJECTION RULES. You are an expert at identifying fresh startups and grand openings. If 'Only New Businesses' mode is active, you perform deep analysis of profile age and review history to ensure entity freshness. Output strictly JSON.`,
           tools: [{ googleSearch: {} }],
           responseMimeType: "application/json",
           responseSchema: {
@@ -105,47 +118,49 @@ export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
             items: {
               type: Type.OBJECT,
               properties: {
-                companyName: { type: Type.STRING, description: "Official legal name of the business." },
+                companyName: { type: Type.STRING },
                 category: { type: Type.STRING },
                 city: { type: Type.STRING },
                 country: { type: Type.STRING },
-                coordinates: { type: Type.STRING, description: "Latitude and longitude if available." },
-                website: { type: Type.STRING, description: "Full URL starting with https://" },
-                phoneNumber: { type: Type.STRING, description: "International format: +[country][number]" },
+                coordinates: { type: Type.STRING },
+                website: { type: Type.STRING },
+                phoneNumber: { type: Type.STRING },
                 email: { type: Type.STRING },
                 linkedin: { type: Type.STRING },
                 facebook: { type: Type.STRING },
                 instagram: { type: Type.STRING },
-                description: { type: Type.STRING, description: "Brief accurate summary of what they do." },
+                description: { type: Type.STRING },
                 rating: { type: Type.STRING },
                 reviewCount: { type: Type.STRING },
                 address: { type: Type.STRING },
-                qualityScore: { type: Type.NUMBER, description: "Score 0-100 based on data completeness and verification." },
-                qualityReasoning: { type: Type.STRING, description: "Why is this lead high/low quality?" },
-                socialSignals: { type: Type.STRING, description: "e.g. 'Highly active on IG', 'Recently reviewed'" },
-                verificationConfidence: { type: Type.STRING, enum: ["high", "medium", "low"] }
+                businessHours: { type: Type.STRING },
+                qualityScore: { type: Type.NUMBER },
+                qualityReasoning: { type: Type.STRING },
+                socialSignals: { type: Type.STRING },
+                growthSignals: { type: Type.STRING },
+                techStack: { type: Type.ARRAY, items: { type: Type.STRING } },
+                lastActivity: { type: Type.STRING },
+                verificationConfidence: { type: Type.STRING, enum: ["high", "medium", "low"] },
+                industry: { type: Type.STRING },
+                companySize: { type: Type.STRING },
+                annualRevenueEstimate: { type: Type.STRING },
+                fundingStatus: { type: Type.STRING }
               },
-              required: ["companyName", "category", "qualityScore", "verificationConfidence"]
+              required: ["companyName", "category", "qualityScore"]
             }
           }
         }
       });
     });
 
-    const generatedText = response.text ?? "";
-    const rawLeads = extractJson(generatedText);
-    const today = new Date().toISOString();
-    
-    // Extract real sources from grounding metadata for proof
+    const rawLeads = extractJson(response.text ?? "");
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const webSources = groundingChunks
-      .filter((c: any) => c.web)
-      .map((c: any) => ({ title: c.web.title || "Verification Link", uri: c.web.uri }));
+    const webSources = groundingChunks.filter((c: any) => c.web).map((c: any) => ({ title: c.web.title || "Audit Link", uri: c.web.uri }));
 
     return rawLeads.map((item: any, index: number) => ({
       ...item,
       id: crypto.randomUUID(),
-      generatedDate: today,
+      generatedDate: new Date().toISOString(),
       searchCity: params.city,
       searchCountry: params.country,
       leadNumber: index + 1,
@@ -154,9 +169,7 @@ export const searchLeads = async (params: SearchParams): Promise<Lead[]> => {
       sources: webSources.length > 0 ? webSources.slice(index % webSources.length, (index % webSources.length) + 1) : []
     }));
   } catch (err: any) {
-    let cleanMessage = err.message || "Unknown error";
-    if (cleanMessage.includes("429")) throw new Error("API Limit Reached: The extraction engine is cooling down. Please wait 60 seconds.");
-    throw new Error(`Extraction Error: ${cleanMessage}`);
+    throw new Error(`Extraction Error: ${err.message}`);
   }
 };
 
@@ -166,15 +179,10 @@ export const sendToWebhook = async (lead: Lead, webhookUrl: string): Promise<boo
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event: "lead_discovered",
-        timestamp: new Date().toISOString(),
-        lead: lead
-      }),
+      body: JSON.stringify({ event: "lead_extraction", payload: lead }),
     });
     return response.ok;
   } catch (error) {
-    console.error("Webhook Dispatch Failed:", error);
     return false;
   }
 };

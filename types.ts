@@ -1,4 +1,13 @@
 
+declare global {
+  interface Window {
+    aistudio: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
+}
+
 export interface Lead {
   id: string;
   userId?: string;
@@ -27,8 +36,15 @@ export interface Lead {
   status: 'new' | 'processed' | 'error';
   contacted: boolean;
   sources?: { title: string; uri: string }[];
-  socialSignals?: string; // e.g., "Active on IG", "Verified GMB"
+  socialSignals?: string;
   verificationConfidence?: 'high' | 'medium' | 'low';
+  growthSignals?: string; 
+  techStack?: string[]; 
+  lastActivity?: string; 
+  companySize?: string;
+  industry?: string;
+  annualRevenueEstimate?: string;
+  fundingStatus?: string;
 }
 
 export type Platform = 'all' | 'instagram' | 'linkedin' | 'facebook' | 'x' | 'google_maps' | 'google_search' | 'yelp' | 'yellow_pages' | 'clutch' | 'trustpilot';
@@ -41,6 +57,8 @@ export interface SearchParams {
   quantity: string;
   noWebsiteOnly: boolean;
   whatsappOnly: boolean;
+  onlyNewBusinesses: boolean; // New temporal filter
+  deepIntelligence?: boolean;
 }
 
 export type BillingCycle = 'monthly' | 'yearly';

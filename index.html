@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,43 +9,54 @@
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..800;1,400..800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --font-heading: 'Instrument Sans', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #09090b;
+            font-family: var(--font-body);
+            background-color: #050505;
             background-image: 
-                radial-gradient(at 0% 0%, hsla(0,100%,50%,0.05) 0, transparent 50%), 
-                radial-gradient(at 50% 0%, hsla(0,100%,50%,0.02) 0, transparent 50%),
+                radial-gradient(at 0% 0%, hsla(0,100%,50%,0.03) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(0,0%,100%,0.02) 0, transparent 50%),
                 radial-gradient(at 100% 100%, hsla(0,100%,50%,0.03) 0, transparent 50%);
             color: #fafafa;
+            -webkit-font-smoothing: antialiased;
+        }
+        h1, h2, h3, h4, .heading {
+            font-family: var(--font-heading);
+            letter-spacing: -0.03em;
         }
         .glass {
-            background: rgba(18, 18, 18, 0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(18, 18, 18, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
         }
         .custom-scrollbar::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
+            width: 4px;
+            height: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
             background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #27272a;
+            background: #1f1f23;
             border-radius: 10px;
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #3f3f46;
-        }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(4px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in {
-            animation: fadeIn 0.4s ease-out forwards;
+            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .text-gradient {
+            background: linear-gradient(to bottom right, #fff 30%, rgba(255,255,255,0.5));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
     </style>
 <script type="importmap">
@@ -63,7 +75,6 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- Entry point for Vite build -->
     <script type="module" src="/index.tsx"></script>
 </body>
 </html>

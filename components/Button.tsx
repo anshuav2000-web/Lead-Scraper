@@ -16,20 +16,20 @@ export const Button: React.FC<ButtonProps> = ({
   disabled, 
   ...props 
 }) => {
-  const baseStyles = "inline-flex items-center justify-center font-black uppercase tracking-widest transition-all duration-300 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 gap-2";
+  const baseStyles = "inline-flex items-center justify-center font-bold uppercase tracking-wider transition-all duration-300 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] gap-2";
   
   const sizes = {
-    sm: "px-4 py-2 text-[10px]",
-    md: "px-6 py-3 text-xs",
-    lg: "px-10 py-5 text-sm shadow-2xl hover:shadow-red-900/40"
+    sm: "px-5 py-2.5 text-[10px]",
+    md: "px-7 py-3.5 text-[11px]",
+    lg: "px-12 py-5 text-xs shadow-2xl"
   };
 
   const variants = {
-    primary: "bg-gradient-to-r from-red-600 to-rose-700 text-white shadow-xl shadow-red-900/20 hover:from-red-500 hover:to-rose-600 border-none",
-    secondary: "bg-zinc-800 text-zinc-100 border border-zinc-700 hover:bg-zinc-700",
-    danger: "bg-red-900/20 text-red-500 border border-red-900/40 hover:bg-red-900/30",
-    success: "bg-emerald-900/20 text-emerald-500 border border-emerald-900/40 hover:bg-emerald-900/30",
-    ghost: "bg-transparent text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50"
+    primary: "bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-xl shadow-red-900/20 hover:from-red-500 hover:to-rose-600 border-none",
+    secondary: "bg-white/[0.04] text-zinc-100 border border-white/[0.08] hover:bg-white/[0.08]",
+    danger: "bg-red-900/10 text-red-500 border border-red-900/20 hover:bg-red-900/20",
+    success: "bg-emerald-900/10 text-emerald-500 border border-emerald-900/20 hover:bg-emerald-900/20",
+    ghost: "bg-transparent text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.03]"
   };
 
   return (

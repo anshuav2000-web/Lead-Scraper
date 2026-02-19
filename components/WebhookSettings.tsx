@@ -68,16 +68,24 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ user, onUpdate
   };
 
   return (
-    <div className="animate-fade-in space-y-10 max-w-4xl mx-auto py-6">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-black text-white tracking-tighter">Enterprise Webhooks</h2>
-        <p className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Automate your leads into your own personal CRM or workflow.</p>
+    <div className="animate-fade-in space-y-16 max-w-7xl mx-auto py-6">
+      <div className="text-center max-w-4xl mx-auto flex flex-col items-center space-y-8">
+        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08]">
+           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Enterprise Automation</span>
+        </div>
+        <h2 className="text-6xl md:text-8xl font-extrabold text-white tracking-tight leading-[0.95] md:leading-[0.85] text-gradient">
+          Automation <br />
+          <span className="text-red-600">Nodes.</span>
+        </h2>
+        <p className="text-zinc-400 font-medium text-lg md:text-xl max-w-2xl leading-relaxed opacity-80">
+          Sync leads directly to your CRM, personal workflow, or enterprise stack via ultra-low latency webhook nodes.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-zinc-900/40 rounded-[2.5rem] border border-zinc-800 p-10 space-y-8">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-6">
+          <div className="bg-zinc-900/30 rounded-[2.5rem] border border-white/[0.05] p-10 space-y-8 backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-white/[0.05] pb-6">
               <div>
                 <h3 className="text-sm font-black text-white uppercase tracking-widest">Global Switch</h3>
                 <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mt-1">Enable or disable all outbound traffic</p>
@@ -96,7 +104,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ user, onUpdate
                 <input 
                   type="url" 
                   placeholder="https://your-server.com/webhook"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-red-600 transition-all"
+                  className="w-full bg-zinc-950/40 border border-white/[0.05] rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-red-600 transition-all"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                 />
@@ -107,7 +115,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ user, onUpdate
                 <input 
                   type="password" 
                   placeholder="••••••••••••••••"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-red-600 transition-all"
+                  className="w-full bg-zinc-950/40 border border-white/[0.05] rounded-2xl px-5 py-4 text-xs font-bold text-white focus:outline-none focus:border-red-600 transition-all"
                   value={secret}
                   onChange={(e) => setSecret(e.target.value)}
                 />
@@ -125,7 +133,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ user, onUpdate
                   variant="secondary"
                   onClick={handleTestWebhook} 
                   isLoading={isTesting}
-                  className="flex-1 md:flex-none px-10 border-zinc-800 text-zinc-400 hover:text-white"
+                  className="flex-1 md:flex-none px-10 border-white/[0.05] text-zinc-400 hover:text-white"
                 >
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                   Test Connection
@@ -134,8 +142,8 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ user, onUpdate
             </div>
           </div>
 
-          <div className="bg-zinc-900/20 rounded-[2.5rem] border border-zinc-800/40 p-8 flex items-center gap-6">
-            <div className="w-12 h-12 bg-zinc-900 rounded-2xl flex items-center justify-center text-red-500 border border-zinc-800">
+          <div className="bg-zinc-900/20 rounded-[2.5rem] border border-white/[0.05] p-8 flex items-center gap-6 backdrop-blur-md">
+            <div className="w-12 h-12 bg-zinc-900 rounded-2xl flex items-center justify-center text-red-500 border border-white/[0.05]">
                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             <div>
@@ -146,7 +154,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ user, onUpdate
         </div>
 
         <div className="space-y-6">
-          <div className="bg-zinc-900/40 rounded-[2.5rem] border border-zinc-800 p-8">
+          <div className="bg-zinc-900/30 rounded-[2.5rem] border border-white/[0.05] p-8 backdrop-blur-xl">
             <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-6">Delivery History</h3>
             <div className="space-y-4">
               {user.webhook?.logs && user.webhook.logs.length > 0 ? (
